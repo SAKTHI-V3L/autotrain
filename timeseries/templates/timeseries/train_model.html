@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Train Model</title>
+</head>
+<body>
+    <h2>Train Model</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <p>Enter input columns as comma-separated values (e.g., col1, col2, col3)</p>
+        <button type="submit">Train</button>
+    </form>
+</body>
+</html>
