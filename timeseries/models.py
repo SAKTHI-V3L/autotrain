@@ -14,4 +14,3 @@ class TrainingParameters(models.Model):
     epochs = models.IntegerField()
     optimizer = models.CharField(max_length=50)
 
-

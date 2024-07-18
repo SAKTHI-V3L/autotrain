@@ -25,11 +25,11 @@ def preprocess_data(data, input_columns, output_column):
 
     for col in input_columns:
         if np.issubdtype(data[col].dtype, np.number):
-          
+            # Scale numerical data
             scaler = MinMaxScaler()
             data[col] = scaler.fit_transform(data[[col]])
         elif pd.api.types.is_datetime64_any_dtype(data[col]):
-            
+            # Extract date features
             data[col] = pd.to_datetime(data[col])
             data[col + '_year'] = data[col].dt.year
             data[col + '_month'] = data[col].dt.month
@@ -39,20 +39,22 @@ def preprocess_data(data, input_columns, output_column):
             encoded_columns += [col + '_year', col + '_month', col + '_day', col + '_hour', col + '_minute']
             data = data.drop(col, axis=1)
         else:
-           
+            # Encode categorical data
             encoder = LabelEncoder()
             data[col] = encoder.fit_transform(data[col])
-   
+    
+    # Encode the datetime features if any
     for col in encoded_columns:
         encoder = LabelEncoder()
         data[col] = encoder.fit_transform(data[col])
     
-   
+    # Separate input and output variables
     X = data[input_columns + encoded_columns].values
     y = data[output_column].values
     
-    
-    X = X.reshape((X.shape[0], X.shape[1], 1))  
+    # Reshape data for LSTM
+    X = X.reshape((X.shape[0], X.shape[1], 1))  # Assuming each column is a feature, and each sample is one time step
+    y = y.reshape((y.shape[0], 1))
     
     return X, y
 
@@ -61,7 +63,10 @@ def train_model(request):
         form = TrainingParametersForm(request.POST)
         if form.is_valid():
             params = form.save(commit=False)
-            params.dataset = form.cleaned_data['dataset']
+            
+            # Get the last uploaded dataset
+            latest_dataset = Dataset.objects.latest('id')
+            params.dataset = latest_dataset
             params.save()
 
             dataset = params.dataset
@@ -70,7 +75,7 @@ def train_model(request):
             input_columns = [col.strip() for col in params.input_variables.split(',')]
             output_column = params.output_variable
 
-            
+            # Preprocess data
             X, y = preprocess_data(data, input_columns, output_column)
 
             model = Sequential()
@@ -84,7 +89,7 @@ def train_model(request):
                 optimizer = SGD()
 
             model.compile(optimizer=optimizer, loss=MeanSquaredError())
-            model.fit(X, y, epochs=params.epochs, batch_size=32)  
+            model.fit(X, y, epochs=params.epochs, batch_size=32)
 
             accuracy = model.evaluate(X, y)
 

@@ -9,8 +9,9 @@ class DatasetForm(forms.ModelForm):
 class TrainingParametersForm(forms.ModelForm):
     class Meta:
         model = TrainingParameters
-        fields = ['dataset', 'input_variables', 'output_variable', 'num_units', 'num_layers', 'activation_function', 'epochs', 'optimizer']
+        fields = ['input_variables', 'output_variable', 'num_units', 'num_layers', 'activation_function', 'epochs', 'optimizer']
         widgets = {
             'input_variables': forms.TextInput(attrs={'placeholder': 'Comma-separated column names'}),
         }
+
 
