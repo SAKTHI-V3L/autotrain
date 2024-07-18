@@ -5,6 +5,9 @@
 </head>
 <body>
     <h2>Train Model</h2>
+    <p><strong>Current Dataset:</strong> {{ dataset.name }}</p>
+    <p><strong>Uploaded File:</strong> <a href="{{ dataset.file.url }}">{{ dataset.file.name }}</a></p>
+
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}

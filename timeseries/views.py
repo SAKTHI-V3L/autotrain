@@ -1,6 +1,4 @@
-import pandas as pd
-import numpy as np
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from .forms import DatasetForm, TrainingParametersForm
 from .models import Dataset, TrainingParameters
 from keras.models import Sequential
@@ -9,6 +7,8 @@ from keras.optimizers import Adam, SGD
 from keras.losses import MeanSquaredError
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 from datetime import datetime
+import pandas as pd
+import numpy as np
 
 def upload_dataset(request):
     if request.method == 'POST':
@@ -59,18 +59,16 @@ def preprocess_data(data, input_columns, output_column):
     return X, y
 
 def train_model(request):
+    latest_dataset = Dataset.objects.latest('id')  # Get the last uploaded dataset
+    
     if request.method == 'POST':
         form = TrainingParametersForm(request.POST)
         if form.is_valid():
             params = form.save(commit=False)
-            
-            # Get the last uploaded dataset
-            latest_dataset = Dataset.objects.latest('id')
-            params.dataset = latest_dataset
+            params.dataset = latest_dataset  # Set the dataset to the latest uploaded dataset
             params.save()
 
-            dataset = params.dataset
-            data = pd.read_csv(dataset.file.path)
+            data = pd.read_csv(latest_dataset.file.path)
 
             input_columns = [col.strip() for col in params.input_variables.split(',')]
             output_column = params.output_variable
@@ -93,7 +91,8 @@ def train_model(request):
 
             accuracy = model.evaluate(X, y)
 
-            return render(request, 'timeseries/model_result.html', {'accuracy': accuracy})
+            return render(request, 'timeseries/model_result.html', {'accuracy': accuracy, 'dataset': latest_dataset})
     else:
         form = TrainingParametersForm()
-    return render(request, 'timeseries/train_model.html', {'form': form})
+    
+    return render(request, 'timeseries/train_model.html', {'form': form, 'dataset': latest_dataset})
