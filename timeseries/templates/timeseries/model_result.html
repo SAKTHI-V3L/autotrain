@@ -6,5 +6,28 @@
 <body>
     <h2>Model Accuracy</h2>
     <p>Accuracy: {{ accuracy }}</p>
+
+    <h2>Predict using Trained Model</h2>
+    <form method="post" action="{% url 'timeseries:model_result' %}">
+        {% csrf_token %}
+        {% if form %}
+            {% for field in form %}
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                <br>
+            {% endfor %}
+        {% endif %}
+        <button type="submit">Predict</button>
+    </form>
+
+    {% if prediction is not None %}
+        <h2>Prediction</h2>
+        <p>Output variable: {{ output_variable }}</p>
+        <p>Predicted value: {{ prediction }}</p>
+    {% else %}
+        <h2>Prediction</h2>
+        <p>Output variable: {{ output_variable }}</p>
+        <p>Predicted value: </p>
+    {% endif %}
 </body>
 </html>
