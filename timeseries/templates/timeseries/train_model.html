@@ -5,8 +5,12 @@
 </head>
 <body>
     <h2>Train Model</h2>
-    <p><strong>Current Dataset:</strong> {{ dataset.name }}</p>
-    <p><strong>Uploaded File:</strong> <a href="{{ dataset.file.url }}">{{ dataset.file.name }}</a></p>
+    {% if dataset %}
+        <p><strong>Current Dataset:</strong> {{ dataset.name }}</p>
+        <p><strong>Uploaded File:</strong> <a href="{{ dataset.file.url }}">{{ dataset.file.name }}</a></p>
+    {% else %}
+        <p>No dataset found. Please upload a dataset first.</p>
+    {% endif %}
 
     <form method="post">
         {% csrf_token %}
