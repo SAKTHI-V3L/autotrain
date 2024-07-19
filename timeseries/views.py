@@ -1,16 +1,15 @@
-import pandas as pd
-import numpy as np
 from django.shortcuts import render, redirect
 from .forms import DatasetForm, TrainingParametersForm, PredictionForm
 from .models import Dataset, TrainingParameters
 from keras.models import load_model
-from keras.optimizers import Adam, SGD
+from keras.optimizers import Adam
 from keras.losses import MeanSquaredError
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 from keras.models import Sequential
 from keras.layers import LSTM, Dense
 from django.conf import settings
-from pathlib import Path
+import pandas as pd
+import numpy as np
 
 def upload_dataset(request):
     if request.method == 'POST':
@@ -22,7 +21,7 @@ def upload_dataset(request):
         form = DatasetForm()
     return render(request, 'timeseries/upload_dataset.html', {'form': form})
 
-def preprocess_data(data, input_columns, output_column):
+def preprocess_data(data, input_columns, output_columns):
     encoded_columns = []
 
     for col in input_columns:
@@ -41,17 +40,17 @@ def preprocess_data(data, input_columns, output_column):
         else:
             encoder = LabelEncoder()
             data[col] = encoder.fit_transform(data[col])
-    
+
     for col in encoded_columns:
         encoder = LabelEncoder()
         data[col] = encoder.fit_transform(data[col])
-    
+
     X = data[input_columns + encoded_columns].values
-    y = data[output_column].values
-    
-    X = X.reshape((X.shape[0], X.shape[1], 1))  
-    y = y.reshape((y.shape[0], 1))
-    
+    y = data[output_columns].values  # Updated to handle multiple output columns
+
+    X = X.reshape((X.shape[0], X.shape[1], 1))
+    y = y.reshape((y.shape[0], len(output_columns)))  # Updated to handle multiple output columns
+
     return X, y
 
 def train_model(request):
@@ -66,14 +65,15 @@ def train_model(request):
             data = pd.read_csv(dataset.file.path)
 
             input_columns = [col.strip() for col in params.input_variables.split(',')]
-            output_column = params.output_variable
+            output_columns = [col.strip() for col in params.output_variables.split(',')]
 
-            X, y = preprocess_data(data, input_columns, output_column)
+            X, y = preprocess_data(data, input_columns, output_columns)
 
             model = Sequential()
-            for _ in range(params.num_layers):
+            for _ in range(params.num_layers - 1):
                 model.add(LSTM(params.num_units, activation=params.activation_function, return_sequences=True))
-            model.add(Dense(1))
+            model.add(LSTM(params.num_units, activation=params.activation_function))  # Final LSTM layer without return_sequences
+            model.add(Dense(len(output_columns)))  # Updated to handle multiple output columns
 
             if params.optimizer == 'adam':
                 optimizer = Adam()
@@ -88,15 +88,17 @@ def train_model(request):
 
             accuracy = model.evaluate(X, y)
 
-            return render(request, 'timeseries/model_result.html', {'accuracy': accuracy, 'output_variable': output_column})
+            return render(request, 'timeseries/model_result.html', {'accuracy': accuracy, 'output_variables': output_columns})
     else:
         form = TrainingParametersForm()
-    return render(request, 'timeseries/train_model.html', {'form': form, 'dataset': Dataset.objects.last()})
+        dataset = Dataset.objects.last()  # Pre-populate with the latest dataset for convenience
+    return render(request, 'timeseries/train_model.html', {'form': form, 'dataset': dataset})
 
 def model_result(request):
     input_data = None
-    prediction = None
-    output_column = None
+    predictions = None
+    output_columns = None
+    zipped_results = None
 
     if request.method == 'POST':
         dataset = Dataset.objects.last()
@@ -104,7 +106,7 @@ def model_result(request):
         training_params = TrainingParameters.objects.last()
 
         input_columns = [col.strip() for col in training_params.input_variables.split(',')]
-        output_column = training_params.output_variable
+        output_columns = [col.strip() for col in training_params.output_variables.split(',')]
 
         form = PredictionForm(request.POST, input_columns=input_columns)
         if form.is_valid():
@@ -114,17 +116,21 @@ def model_result(request):
             model = load_model(model_path)
 
             input_data_df = pd.DataFrame([input_data])
-            X, _ = preprocess_data(data, input_columns, output_column)
+            X, _ = preprocess_data(data, input_columns, output_columns)
 
-            prediction = model.predict(X)
-            prediction = prediction[0][0]
+            # Convert predictions to a list of lists
+            predictions = model.predict(X).tolist()
+
+            # Zip output columns and predictions
+            zipped_results = list(zip(output_columns, predictions[0]))
 
     else:
         form = PredictionForm()
 
     return render(request, 'timeseries/model_result.html', {
         'input_data': input_data,
-        'prediction': prediction,
+        'predictions': predictions,
         'form': form,
-        'output_variable': output_column
+        'output_columns': output_columns,
+        'zipped_results': zipped_results
     })

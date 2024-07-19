@@ -20,14 +20,19 @@
         <button type="submit">Predict</button>
     </form>
 
-    {% if prediction is not None %}
-        <h2>Prediction</h2>
-        <p>Output variable: {{ output_variable }}</p>
-        <p>Predicted value: {{ prediction }}</p>
+    {% if zipped_results %}
+        <h2>Prediction Results</h2>
+        <ul>
+            {% for output_column, prediction in zipped_results %}
+                <li>
+                    <strong>Output Variable:</strong> {{ output_column }}<br>
+                    <strong>Predicted Value:</strong> {{ prediction }}
+                </li>
+            {% endfor %}
+        </ul>
     {% else %}
-        <h2>Prediction</h2>
-        <p>Output variable: {{ output_variable }}</p>
-        <p>Predicted value: </p>
+        <h2>Prediction Results</h2>
+        <p>No predictions available. Ensure that you have input data and the model is trained.</p>
     {% endif %}
 </body>
 </html>
