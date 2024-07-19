@@ -82,6 +82,12 @@ def train_model(request):
                 optimizer = Adam()
             elif params.optimizer == 'sgd':
                 optimizer = SGD()
+            elif params.optimizer == 'rmsprop':
+                optimizer = RMSprop()
+            elif params.optimizer == 'adagrad':
+                optimizer = Adagrad()
+            elif params.optimizer == 'adadelta':
+                optimizer = Adadelta()
 
             model.compile(optimizer=optimizer, loss=MeanSquaredError())
             model.fit(X, y, epochs=params.epochs, batch_size=32)
@@ -96,6 +102,7 @@ def train_model(request):
         form = TrainingParametersForm()
         dataset = Dataset.objects.last()
     return render(request, 'timeseries/train_model.html', {'form': form, 'dataset': dataset})
+
 
 def model_result(request):
     input_data = None

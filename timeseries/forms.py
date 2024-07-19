@@ -6,18 +6,31 @@ class DatasetForm(forms.ModelForm):
         model = Dataset
         fields = ['name', 'file']
 
+
+ACTIVATION_FUNCTION_CHOICES = [
+    ('relu', 'ReLU'),
+    ('tanh', 'Tanh'),
+    ('sigmoid', 'Sigmoid'),
+    ('softmax', 'Softmax'),
+    ('linear', 'Linear'),
+]
+
+OPTIMIZER_CHOICES = [
+    ('adam', 'Adam'),
+    ('sgd', 'SGD'),
+    ('rmsprop', 'RMSprop'),
+    ('adagrad', 'Adagrad'),
+    ('adadelta', 'Adadelta'),
+]
+
 class TrainingParametersForm(forms.ModelForm):
+    activation_function = forms.ChoiceField(choices=ACTIVATION_FUNCTION_CHOICES, required=True)
+    optimizer = forms.ChoiceField(choices=OPTIMIZER_CHOICES, required=True)
+
     class Meta:
         model = TrainingParameters
-        fields = [
-            'input_variables', 
-            'output_variables',  # Changed from output_variable to output_variables
-            'num_units', 
-            'num_layers', 
-            'activation_function', 
-            'epochs', 
-            'optimizer'
-        ]
+        fields = ['input_variables', 'output_variables', 'num_units', 'num_layers', 'activation_function', 'epochs', 'optimizer']
+
 
 
 class PredictionForm(forms.Form):
