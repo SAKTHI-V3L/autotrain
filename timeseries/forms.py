@@ -19,11 +19,14 @@ class TrainingParametersForm(forms.ModelForm):
             'optimizer'
         ]
 
+
 class PredictionForm(forms.Form):
     def __init__(self, *args, **kwargs):
         input_columns = kwargs.pop('input_columns', [])
         super(PredictionForm, self).__init__(*args, **kwargs)
         for col in input_columns:
-            self.fields[col] = forms.FloatField(label=col)
+            # Use CharField to accept any type of input, then convert in view
+            self.fields[col] = forms.CharField(label=col)
+
 
 

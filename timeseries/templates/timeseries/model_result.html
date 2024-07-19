@@ -4,8 +4,10 @@
     <title>Model Result</title>
 </head>
 <body>
-    <h2>Model Accuracy</h2>
-    <p>Accuracy: {{ accuracy }}</p>
+    {% if accuracy is not None %}
+        <h2>Model Accuracy</h2>
+        <p>Accuracy: {{ accuracy }}</p>
+    {% endif %}
 
     <h2>Predict using Trained Model</h2>
     <form method="post" action="{% url 'timeseries:model_result' %}">
@@ -32,7 +34,7 @@
         </ul>
     {% else %}
         <h2>Prediction Results</h2>
-        <p>No predictions available. Ensure that you have input data and the model is trained.</p>
+        <p>enter input value to see predictions.</p>
     {% endif %}
 </body>
 </html>

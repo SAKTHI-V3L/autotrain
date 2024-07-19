@@ -54,6 +54,9 @@ def preprocess_data(data, input_columns, output_columns):
     return X, y
 
 def train_model(request):
+    accuracy = None
+    output_columns = None
+
     if request.method == 'POST':
         form = TrainingParametersForm(request.POST)
         if form.is_valid():
@@ -73,7 +76,7 @@ def train_model(request):
             for _ in range(params.num_layers - 1):
                 model.add(LSTM(params.num_units, activation=params.activation_function, return_sequences=True))
             model.add(LSTM(params.num_units, activation=params.activation_function))  # Final LSTM layer without return_sequences
-            model.add(Dense(len(output_columns)))  # Updated to handle multiple output columns
+            model.add(Dense(len(output_columns)))
 
             if params.optimizer == 'adam':
                 optimizer = Adam()
@@ -88,10 +91,10 @@ def train_model(request):
 
             accuracy = model.evaluate(X, y)
 
-            return render(request, 'timeseries/model_result.html', {'accuracy': accuracy, 'output_variables': output_columns})
+            return render(request, 'timeseries/model_result.html', {'accuracy': accuracy, 'output_columns': output_columns})
     else:
         form = TrainingParametersForm()
-        dataset = Dataset.objects.last()  # Pre-populate with the latest dataset for convenience
+        dataset = Dataset.objects.last()
     return render(request, 'timeseries/train_model.html', {'form': form, 'dataset': dataset})
 
 def model_result(request):
@@ -112,11 +115,20 @@ def model_result(request):
         if form.is_valid():
             input_data = form.cleaned_data
 
+            # Convert input data to appropriate types
+            processed_input_data = {}
+            for col, value in input_data.items():
+                try:
+                    processed_input_data[col] = float(value)  # Convert to float if possible
+                except ValueError:
+                    processed_input_data[col] = value  # Keep as string if conversion fails
+
+            input_data_df = pd.DataFrame([processed_input_data])
+            X, _ = preprocess_data(data, input_columns, output_columns)
+
+            # Load the model
             model_path = settings.BASE_DIR / 'timeseries' / 'models' / 'trained_model.h5'
             model = load_model(model_path)
-
-            input_data_df = pd.DataFrame([input_data])
-            X, _ = preprocess_data(data, input_columns, output_columns)
 
             # Convert predictions to a list of lists
             predictions = model.predict(X).tolist()
