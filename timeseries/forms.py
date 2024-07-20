@@ -6,7 +6,6 @@ class DatasetForm(forms.ModelForm):
         model = Dataset
         fields = ['name', 'file']
 
-
 ACTIVATION_FUNCTION_CHOICES = [
     ('relu', 'ReLU'),
     ('tanh', 'Tanh'),
@@ -23,15 +22,25 @@ OPTIMIZER_CHOICES = [
     ('adadelta', 'Adadelta'),
 ]
 
+CHOICES = [
+    ('none', 'None'),
+    ('input', 'Input'),
+    ('output', 'Output')
+]
+
 class TrainingParametersForm(forms.ModelForm):
     activation_function = forms.ChoiceField(choices=ACTIVATION_FUNCTION_CHOICES, required=True)
     optimizer = forms.ChoiceField(choices=OPTIMIZER_CHOICES, required=True)
 
     class Meta:
         model = TrainingParameters
-        fields = ['input_variables', 'output_variables', 'num_units', 'num_layers', 'activation_function', 'epochs', 'optimizer']
+        fields = ['num_units', 'num_layers', 'activation_function', 'epochs', 'optimizer']
 
-
+    def __init__(self, *args, **kwargs):
+        dataset_columns = kwargs.pop('dataset_columns', [])
+        super().__init__(*args, **kwargs)
+        for col in dataset_columns:
+            self.fields[f'col_{col}'] = forms.ChoiceField(choices=CHOICES, label=col, initial='none')
 
 class PredictionForm(forms.Form):
     def __init__(self, *args, **kwargs):
@@ -40,6 +49,4 @@ class PredictionForm(forms.Form):
         for col in input_columns:
             # Use CharField to accept any type of input, then convert in view
             self.fields[col] = forms.CharField(label=col)
-
-
 

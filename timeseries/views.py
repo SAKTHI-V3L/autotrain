@@ -57,26 +57,39 @@ def train_model(request):
     accuracy = None
     output_columns = None
 
+    dataset = Dataset.objects.last()
+    data = pd.read_csv(dataset.file.path) if dataset else pd.DataFrame()
+
     if request.method == 'POST':
-        form = TrainingParametersForm(request.POST)
+        form = TrainingParametersForm(request.POST, dataset_columns=data.columns)
         if form.is_valid():
             params = form.save(commit=False)
-            params.dataset = Dataset.objects.last()
+            params.dataset = dataset
             params.save()
 
-            dataset = params.dataset
-            data = pd.read_csv(dataset.file.path)
+            input_columns = []
+            output_columns = []
+            for col in data.columns:
+                value = form.cleaned_data[f'col_{col}']
+                if value == 'input':
+                    input_columns.append(col)
+                elif value == 'output':
+                    output_columns.append(col)
 
-            input_columns = [col.strip() for col in params.input_variables.split(',')]
-            output_columns = [col.strip() for col in params.output_variables.split(',')]
+            input_columns = ','.join(input_columns)
+            output_columns = ','.join(output_columns)
+            
+            params.input_variables = input_columns
+            params.output_variables = output_columns
+            params.save()
 
-            X, y = preprocess_data(data, input_columns, output_columns)
+            X, y = preprocess_data(data, input_columns.split(','), output_columns.split(','))
 
             model = Sequential()
             for _ in range(params.num_layers - 1):
                 model.add(LSTM(params.num_units, activation=params.activation_function, return_sequences=True))
             model.add(LSTM(params.num_units, activation=params.activation_function))  # Final LSTM layer without return_sequences
-            model.add(Dense(len(output_columns)))
+            model.add(Dense(len(output_columns.split(','))))
 
             if params.optimizer == 'adam':
                 optimizer = Adam()
@@ -97,13 +110,13 @@ def train_model(request):
 
             accuracy = model.evaluate(X, y)
 
-            return render(request, 'timeseries/model_result.html', {'accuracy': accuracy, 'output_columns': output_columns})
+            return render(request, 'timeseries/model_result.html', {'accuracy': accuracy, 'output_columns': output_columns.split(',')})
     else:
-        form = TrainingParametersForm()
-        dataset = Dataset.objects.last()
+        form = TrainingParametersForm(dataset_columns=data.columns)
+
     return render(request, 'timeseries/train_model.html', {'form': form, 'dataset': dataset})
 
-
+        
 def model_result(request):
     input_data = None
     predictions = None
