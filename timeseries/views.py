@@ -22,9 +22,15 @@ def upload_dataset(request):
     return render(request, 'timeseries/upload_dataset.html', {'form': form})
 
 def preprocess_data(data, input_columns, output_columns):
+    # Remove columns with names like "Unnamed: 0" or any unwanted pattern
+    columns_to_remove = [col for col in data.columns if 'Unnamed' in col]
+    data = data.drop(columns=columns_to_remove, errors='ignore')
+
     encoded_columns = []
 
     for col in input_columns:
+        if col not in data.columns:
+            continue
         if np.issubdtype(data[col].dtype, np.number):
             scaler = MinMaxScaler()
             data[col] = scaler.fit_transform(data[[col]])
@@ -42,9 +48,13 @@ def preprocess_data(data, input_columns, output_columns):
             data[col] = encoder.fit_transform(data[col])
 
     for col in encoded_columns:
-        encoder = LabelEncoder()
-        data[col] = encoder.fit_transform(data[col])
+        if col in data.columns:
+            encoder = LabelEncoder()
+            data[col] = encoder.fit_transform(data[col])
 
+    # Ensure the output columns are present in the dataset
+    output_columns = [col for col in output_columns if col in data.columns]
+    
     X = data[input_columns + encoded_columns].values
     y = data[output_columns].values  # Updated to handle multiple output columns
 
@@ -52,6 +62,7 @@ def preprocess_data(data, input_columns, output_columns):
     y = y.reshape((y.shape[0], len(output_columns)))  # Updated to handle multiple output columns
 
     return X, y
+
 
 def train_model(request):
     accuracy = None

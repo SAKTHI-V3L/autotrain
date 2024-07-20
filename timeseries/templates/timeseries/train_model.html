@@ -2,16 +2,63 @@
 <html>
 <head>
     <title>Train Model</title>
+    <style>
+        body {
+            background-color: #f5f5f5;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #444;
+        }
+        h2 {
+            color: #2196F3;
+            text-align: center;
+            font-size: 2em;
+        }
+        .dataset-info {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .dataset-info p {
+            font-size: 1.2em;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        button {
+            background-color: #2196F3;
+            color: white;
+            padding: 10px 20px;
+            margin-top: 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+        button:hover {
+            background-color: #0b7dda;
+        }
+        .form-field {
+            margin: 10px 0;
+        }
+        input, select {
+            padding: 10px;
+            margin-top: 5px;
+            width: 300px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+    </style>
 </head>
 <body>
     <h2>Train Model</h2>
-    {% if dataset %}
-        <p><strong>Current Dataset:</strong> {{ dataset.name }}</p>
-        <p><strong>Uploaded File:</strong> <a href="{{ dataset.file.url }}">{{ dataset.file.name }}</a></p>
-    {% else %}
-        <p>No dataset found. Please upload a dataset first.</p>
-    {% endif %}
-
+    <div class="dataset-info">
+        {% if dataset %}
+            <p><strong>Current Dataset:</strong> {{ dataset.name }}</p>
+            <p><strong>Uploaded File:</strong> <a href="{{ dataset.file.url }}">{{ dataset.file.name }}</a></p>
+        {% else %}
+            <p>No dataset found. Please upload a dataset first.</p>
+        {% endif %}
+    </div>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}

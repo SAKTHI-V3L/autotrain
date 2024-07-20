@@ -3,6 +3,12 @@ from django.db import models
 class Dataset(models.Model):
     name = models.CharField(max_length=100)
     file = models.FileField(upload_to='datasets/')
+    task_type = models.CharField(
+        max_length=20, 
+        choices=[('regression', 'Regression'), ('classification', 'Classification')],
+        default='regression' 
+    )
+
 
 class TrainingParameters(models.Model):
     dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE)
