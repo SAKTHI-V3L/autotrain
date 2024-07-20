@@ -47,6 +47,5 @@ class PredictionForm(forms.Form):
         input_columns = kwargs.pop('input_columns', [])
         super(PredictionForm, self).__init__(*args, **kwargs)
         for col in input_columns:
-            # Use CharField to accept any type of input, then convert in view
             self.fields[col] = forms.CharField(label=col)
 
