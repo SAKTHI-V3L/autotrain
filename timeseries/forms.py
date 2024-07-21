@@ -48,4 +48,3 @@ class PredictionForm(forms.Form):
         super(PredictionForm, self).__init__(*args, **kwargs)
         for col in input_columns:
             self.fields[col] = forms.CharField(label=col)
-

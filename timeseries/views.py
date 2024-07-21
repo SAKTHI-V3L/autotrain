@@ -52,14 +52,14 @@ def preprocess_data(data, input_columns, output_columns):
             encoder = LabelEncoder()
             data[col] = encoder.fit_transform(data[col])
 
-    # Ensure the output columns are present in the dataset
+    
     output_columns = [col for col in output_columns if col in data.columns]
     
     X = data[input_columns + encoded_columns].values
-    y = data[output_columns].values  # Updated to handle multiple output columns
+    y = data[output_columns].values  
 
     X = X.reshape((X.shape[0], X.shape[1], 1))
-    y = y.reshape((y.shape[0], len(output_columns)))  # Updated to handle multiple output columns
+    y = y.reshape((y.shape[0], len(output_columns)))   
 
     return X, y
 
@@ -99,7 +99,7 @@ def train_model(request):
             model = Sequential()
             for _ in range(params.num_layers - 1):
                 model.add(LSTM(params.num_units, activation=params.activation_function, return_sequences=True))
-            model.add(LSTM(params.num_units, activation=params.activation_function))  # Final LSTM layer without return_sequences
+            model.add(LSTM(params.num_units, activation=params.activation_function))  
             model.add(Dense(len(output_columns.split(','))))
 
             if params.optimizer == 'adam':
@@ -146,25 +146,25 @@ def model_result(request):
         if form.is_valid():
             input_data = form.cleaned_data
 
-            # Convert input data to appropriate types
+            
             processed_input_data = {}
             for col, value in input_data.items():
                 try:
-                    processed_input_data[col] = float(value)  # Convert to float if possible
+                    processed_input_data[col] = float(value) 
                 except ValueError:
-                    processed_input_data[col] = value  # Keep as string if conversion fails
+                    processed_input_data[col] = value  
 
             input_data_df = pd.DataFrame([processed_input_data])
             X, _ = preprocess_data(data, input_columns, output_columns)
 
-            # Load the model
+        
             model_path = settings.BASE_DIR / 'timeseries' / 'models' / 'trained_model.h5'
             model = load_model(model_path)
 
-            # Convert predictions to a list of lists
+
             predictions = model.predict(X).tolist()
 
-            # Zip output columns and predictions
+            
             zipped_results = list(zip(output_columns, predictions[0]))
 
     else:

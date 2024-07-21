@@ -1,13 +1,8 @@
 from django.db import models
 
 class Dataset(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=255)
     file = models.FileField(upload_to='datasets/')
-    task_type = models.CharField(
-        max_length=20, 
-        choices=[('regression', 'Regression'), ('classification', 'Classification')],
-        default='regression' 
-    )
 
 
 class TrainingParameters(models.Model):

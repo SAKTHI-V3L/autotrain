@@ -47,6 +47,12 @@
             border-radius: 5px;
             border: 1px solid #ccc;
         }
+        .info-message {
+            margin: 20px 0;
+            text-align: center;
+            font-size: 1.1em;
+            color: #d9534f; /* Optional: Red color for warning */
+        }
     </style>
 </head>
 <body>
@@ -61,6 +67,10 @@
     </div>
     <form method="post">
         {% csrf_token %}
+        <!-- Informative Message -->
+        <div class="info-message">
+            Select parameters as well as input and output variables, don't select categorical variables as output.
+        </div>
         {{ form.as_p }}
         <button type="submit">Train</button>
     </form>
